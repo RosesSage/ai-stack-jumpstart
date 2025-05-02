@@ -1,0 +1,44 @@
+version: "3.9"
+services:
+  postgres:
+    image: postgres:14
+    restart: always
+    environment:
+      POSTGRES_USER: windmill
+      POSTGRES_PASSWORD: password
+    volumes: [postgres_data:/var/lib/postgresql/data]
+
+  windmill:
+    image: ghcr.io/windmill-labs/windmill:latest
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      WM_SUPERUSER_PASSWORD: ${WM_SUPERUSER_PASSWORD}
+    ports: ["8080:8080"]
+    depends_on: [postgres]
+    volumes: ["./windmill_scripts:/scripts"]
+
+  flowise:
+    image: flowiseai/flowise:latest
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    ports: ["3000:3000"]
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports: ["6333:6333"]
+    volumes: [qdrant_data:/qdrant/storage]
+
+  vllm:
+    image: vllm/vllm-openai:latest
+    command: ["--model", "gpt2"]
+    environment:
+      HUGGING_FACE_HUB_TOKEN: ${HUGGING_FACE_HUB_TOKEN}
+    ports: ["8000:8000"]
+
+  grafana:
+    image: grafana/grafana:latest
+    ports: ["3001:3000"]
+
+volumes:
+  postgres_data:
+  qdrant_data:
